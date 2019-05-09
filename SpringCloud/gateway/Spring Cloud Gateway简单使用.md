@@ -1,7 +1,3 @@
----
-
----
-
 ![中文测试](../../图床/title1.jpg)
 
 ## Spring Cloud Gateway 简单使用
@@ -79,7 +75,6 @@ spring:
 ```yml
 server:
   port: 8080
-
 spring:
   application:
     name: gateway
@@ -89,5 +84,48 @@ spring:
         locator:
           enabled: true		#开启根据服务转发
           lower-case-service-id: true	#服务名默认注册是大写，开启后输入小写即可访问
+#注册中心地址
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8501/eureka/
 ```
+
+> spring.cloud.gateway.discovery.locator.enabled 设置为true后，gateway会自动匹配service-id的请求。
+
+##### 代码模式配置
+
+------
+
+声明一个bean即可：
+
+```java
+@SpringBootApplication
+public class GatewayApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        StripPrefixGatewayFilterFactory stripPrefixGatewayFilterFactory = new StripPrefixGatewayFilterFactory();
+
+        return builder.routes()
+                .route("path_route", r -> r.path("/spring-cloud/**")
+                        .filters(gatewayFilterSpec -> gatewayFilterSpec.filter(stripPrefixGatewayFilterFactory.apply(config -> config.setParts(1))))
+                        .uri("lb://SABER-AUTH-PROVIDER"))
+                .build();
+    }
+}
+```
+
+
+
+- StripPrefixGatewayFilterFactory是个过滤器，作用是去掉请求路径的前缀。
+
+> eg: config.setParts(1) 时请求 http://localhost:8080/spring-cloud/test 时转发到 SABER-AUTH-PROVIDER 服务上时的请求为 /test
+
+- 过滤器`.filters()`需要声明在`.uri()`前边才会有截取的效果。
+- `.uri()`中 `lb:service-id` 格式网关会自动从注册中心获取请求路径。
 
