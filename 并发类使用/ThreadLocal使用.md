@@ -133,6 +133,8 @@ public class ThreadLocalTest {
 
 这种情况下阿里开源过一个**TransmittableThreadLocal**专门用来解决这种情况
 
+##### T5: TransmittableThreadLocal版
+
 ```xml
 <dependency>
     <groupId>com.alibaba</groupId>
